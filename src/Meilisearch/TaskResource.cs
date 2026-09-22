@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -9,6 +11,7 @@ namespace Meilisearch
     /// </summary>
     public class TaskResource
     {
+        [JsonConstructor]
         public TaskResource(int uid, string indexUid, TaskInfoStatus status, TaskInfoType type,
             IReadOnlyDictionary<string, object> details, IReadOnlyDictionary<string, string> error, string duration, DateTime enqueuedAt,
             DateTime? startedAt, DateTime? finishedAt)
@@ -53,7 +56,8 @@ namespace Meilisearch
         /// Detailed information on the task payload.
         /// </summary>
         [JsonPropertyName("details")]
-        public IReadOnlyDictionary<string, dynamic> Details { get; }
+        [JsonConverter(typeof(UntypedReadOnlyDictionaryJsonConverter))]
+        public IReadOnlyDictionary<string, object> Details { get; }
 
         /// <summary>
         /// Error details and context. Only present when a task has the failed status.

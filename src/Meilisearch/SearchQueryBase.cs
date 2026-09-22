@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -24,7 +26,8 @@ namespace Meilisearch
         /// Gets or sets the filter to apply to the query.
         /// </summary>
         [JsonPropertyName("filter")]
-        public dynamic Filter { get; set; }
+        [JsonConverter(typeof(UntypedJsonConverter))]
+        public object Filter { get; set; }
 
         /// <summary>
         /// Gets or sets attributes to retrieve.

@@ -23,6 +23,7 @@ namespace Meilisearch
         /// <param name="matchesPosition"></param>
         /// <param name="facetStats"></param>
         /// <param name="indexUid"></param>
+        [JsonConstructor]
         public PaginatedSearchResult(
             IReadOnlyCollection<T> hits,
             int hitsPerPage,

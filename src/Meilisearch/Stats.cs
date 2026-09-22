@@ -9,6 +9,7 @@ namespace Meilisearch
     /// </summary>
     public class Stats
     {
+        [JsonConstructor]
         public Stats(long databaseSize, DateTime? lastUpdate, IReadOnlyDictionary<string, IndexStats> indexes, long usedDatabaseSize)
         {
             DatabaseSize = databaseSize;

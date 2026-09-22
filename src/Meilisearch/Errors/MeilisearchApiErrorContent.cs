@@ -7,6 +7,7 @@ namespace Meilisearch
     /// </summary>
     public class MeilisearchApiErrorContent
     {
+        [JsonConstructor]
         public MeilisearchApiErrorContent(string message, string code, string type, string link)
         {
             Message = message;

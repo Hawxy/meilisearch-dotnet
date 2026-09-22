@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Meilisearch.Converters
 {
@@ -36,10 +37,10 @@ namespace Meilisearch.Converters
                     switch (propertyName)
                     {
                         case "attributePatterns":
-                            result.AttributePatterns = JsonSerializer.Deserialize<IEnumerable<string>>(ref reader, options);
+                            result.AttributePatterns = JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<IEnumerable<string>>)options.GetTypeInfo(typeof(IEnumerable<string>)));
                             break;
                         case "features":
-                            result.Features = JsonSerializer.Deserialize<FilterableAttributeFeatures>(ref reader, options);
+                            result.Features = JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<FilterableAttributeFeatures>)options.GetTypeInfo(typeof(FilterableAttributeFeatures)));
                             break;
                         default:
                             reader.Skip();
@@ -70,12 +71,12 @@ namespace Meilisearch.Converters
             writer.WriteStartObject();
 
             writer.WritePropertyName("attributePatterns");
-            JsonSerializer.Serialize(writer, value.AttributePatterns, options);
+            JsonSerializer.Serialize(writer, value.AttributePatterns, (JsonTypeInfo<IEnumerable<string>>)options.GetTypeInfo(typeof(IEnumerable<string>)));
 
             if (value.Features != null)
             {
                 writer.WritePropertyName("features");
-                JsonSerializer.Serialize(writer, value.Features, options);
+                JsonSerializer.Serialize(writer, value.Features, (JsonTypeInfo<FilterableAttributeFeatures>)options.GetTypeInfo(typeof(FilterableAttributeFeatures)));
             }
 
             writer.WriteEndObject();

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -30,7 +32,8 @@ namespace Meilisearch
         /// Gets or sets the filter property
         /// </summary>
         [JsonPropertyName("filter")]
-        public dynamic Filter { get; set; }
+        [JsonConverter(typeof(UntypedJsonConverter))]
+        public object Filter { get; set; }
 
         /// <summary>
         /// Gets or sets the matchingStrategy property, can be <c>last</c>, <c>all</c> or <c>frequency</c>.

@@ -1,4 +1,9 @@
+using System.Buffers;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
+
+using Meilisearch.Converters;
 
 namespace Meilisearch
 {
@@ -47,6 +52,20 @@ namespace Meilisearch
         public object ToClaim()
         {
             return _rules;
+        }
+
+        /// <summary>
+        /// Serializes the rules to JSON without reflection over their runtime types.
+        /// </summary>
+        internal string ToJson()
+        {
+            var buffer = new ArrayBufferWriter<byte>();
+            using (var writer = new Utf8JsonWriter(buffer))
+            {
+                UntypedJsonConverter.WriteValue(writer, _rules, null);
+            }
+
+            return Encoding.UTF8.GetString(buffer.WrittenSpan.ToArray());
         }
     }
 }

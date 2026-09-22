@@ -56,7 +56,8 @@ namespace Meilisearch
     /// <summary>
     /// Base class of Actions for Dynamic Search Rules
     /// </summary>
-    [JsonConverter(typeof(DynamicSearchRuleActionConverter))]
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = TypePropertyName)]
+    [JsonDerivedType(typeof(PinAction), "pin")]
     public abstract class BaseAction
     {
         /// <summary>
@@ -65,9 +66,10 @@ namespace Meilisearch
         public const string TypePropertyName = "type";
 
         /// <summary>
-        /// Describes action type
+        /// Describes action type. The serializer writes the discriminator from <see cref="JsonDerivedTypeAttribute"/>,
+        /// so this property is not serialized itself.
         /// </summary>
-        [JsonPropertyName(TypePropertyName)]
+        [JsonIgnore]
         public abstract ActionType Type { get; }
     }
 
@@ -78,6 +80,7 @@ namespace Meilisearch
     {
         /// <inheritdoc/>
         /// <value>ActionType.Pin</value>
+        [JsonIgnore]
         public override ActionType Type => ActionType.Pin;
 
         /// <summary>

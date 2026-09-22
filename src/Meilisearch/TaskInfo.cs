@@ -11,6 +11,7 @@ namespace Meilisearch
     /// </summary>
     public class TaskInfo
     {
+        [JsonConstructor]
         public TaskInfo(int taskUid, string indexUid, TaskInfoStatus status, TaskInfoType type,
             IReadOnlyDictionary<string, object> details, IReadOnlyDictionary<string, string> error, string duration, DateTime enqueuedAt,
             DateTime? startedAt, DateTime? finishedAt)
@@ -55,6 +56,7 @@ namespace Meilisearch
         /// Detailed information on the task payload.
         /// </summary>
         [JsonPropertyName("details")]
+        [JsonConverter(typeof(UntypedReadOnlyDictionaryJsonConverter))]
         public IReadOnlyDictionary<string, object> Details { get; }
 
         /// <summary>
@@ -94,7 +96,7 @@ namespace Meilisearch
         public int? CanceledBy { get; }
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter<TaskInfoStatus>))]
     public enum TaskInfoStatus
     {
         Enqueued,

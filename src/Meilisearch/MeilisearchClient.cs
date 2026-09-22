@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Meilisearch.Extensions;
+using Meilisearch.Json;
 using Meilisearch.QueryParameters;
 
 namespace Meilisearch
@@ -385,10 +386,8 @@ namespace Meilisearch
         public async Task<bool> EnableDynamicSearchRules(CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync("experimental-features", new
-                {
-                    dynamicSearchRules = true
-                }, cancellationToken: cancellationToken)
+                await _http.PatchAsJsonAsync("experimental-features", new ExperimentalFeaturesPatch { DynamicSearchRules = true },
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
 
             var result = await responseMessage.Content
@@ -434,7 +433,7 @@ namespace Meilisearch
                 .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<ResourceResults<IEnumerable<DynamicSearchRule>>>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync<ResourceResults<IEnumerable<DynamicSearchRule>>>(Constants.JsonSerializerOptionsWriteNulls, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -451,7 +450,7 @@ namespace Meilisearch
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<DynamicSearchRule>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync<DynamicSearchRule>(Constants.JsonSerializerOptionsWriteNulls, cancellationToken)
                 .ConfigureAwait(false);
         }
 

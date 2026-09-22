@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -66,12 +68,14 @@ namespace Meilisearch
         /// Gets or sets the request.
         /// </summary>
         [JsonPropertyName("request")]
+        [JsonConverter(typeof(UntypedDictionaryJsonConverter))]
         public Dictionary<string, object> Request { get; set; }
 
         /// <summary>
         /// Gets or sets the response.
         /// </summary>
         [JsonPropertyName("response")]
+        [JsonConverter(typeof(UntypedDictionaryJsonConverter))]
         public Dictionary<string, object> Response { get; set; }
 
         /// <summary>

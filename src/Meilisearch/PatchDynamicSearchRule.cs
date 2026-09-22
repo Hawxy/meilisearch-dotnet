@@ -15,6 +15,7 @@ namespace Meilisearch
         /// </summary>
         [JsonPropertyName("actions")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(OptionalJsonConverter<IEnumerable<DSRAction>>))]
         public Optional<IEnumerable<DSRAction>> Actions { get; set; }
 
         /// <summary>
@@ -22,6 +23,7 @@ namespace Meilisearch
         /// </summary>
         [JsonPropertyName("description")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(OptionalJsonConverter<string>))]
         public Optional<string> Description { get; set; }
 
         /// <summary>
@@ -34,6 +36,7 @@ namespace Meilisearch
         /// </summary>
         [JsonPropertyName("precedence")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(OptionalJsonConverter<ulong?>))]
         public Optional<ulong?> Precedence { get; set; }
 
         /// <summary>
@@ -41,6 +44,7 @@ namespace Meilisearch
         /// </summary>
         [JsonPropertyName("active")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(OptionalJsonConverter<bool?>))]
         public Optional<bool?> Active { get; set; }
 
         /// <summary>
@@ -48,6 +52,7 @@ namespace Meilisearch
         /// </summary>
         [JsonPropertyName("conditions")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonConverter(typeof(OptionalJsonConverter<DynamicSearchRuleConditions>))]
         public Optional<DynamicSearchRuleConditions> Conditions { get; set; }
     }
 }
