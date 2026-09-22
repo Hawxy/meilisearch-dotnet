@@ -25,12 +25,7 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage responseMessage;
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             responseMessage = await _http.PostJsonCustomAsync(uri, documents, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
@@ -48,12 +43,7 @@ namespace Meilisearch
         public async Task<TaskInfo> AddDocumentsJsonAsync(string documents, string primaryKey = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -73,20 +63,10 @@ namespace Meilisearch
             char csvDelimiter = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-            var queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
-
-            if (primaryKey != default)
-            {
-                queryString.Add("primaryKey", primaryKey);
-            }
-
-            if (csvDelimiter != default)
-            {
-                queryString.Add("csvDelimiter", csvDelimiter.ToString());
-            }
-
-            uri = $"{uri}?{queryString}";
+            var uri = new QueryStringBuilder()
+                .Add("primaryKey", primaryKey)
+                .Add("csvDelimiter", csvDelimiter == default ? null : csvDelimiter.ToString())
+                .Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -104,12 +84,7 @@ namespace Meilisearch
         public async Task<TaskInfo> AddDocumentsNdjsonAsync(string documents, string primaryKey = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -193,12 +168,7 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             HttpResponseMessage responseMessage;
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             responseMessage = await _http
                 .PutJsonCustomAsync(uri, documents, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken)
@@ -218,12 +188,7 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateDocumentsJsonAsync(string documents, string primaryKey = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -241,12 +206,7 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateDocumentsCsvAsync(string documents, string primaryKey = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
@@ -264,12 +224,7 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateDocumentsNdjsonAsync(string documents, string primaryKey = default,
             CancellationToken cancellationToken = default)
         {
-            var uri = $"indexes/{Uid}/documents";
-
-            if (primaryKey != default)
-            {
-                uri = $"{uri}?{new { primaryKey = primaryKey }.ToQueryString()}";
-            }
+            var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);

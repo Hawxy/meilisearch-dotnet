@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
         <OutputType>Library</OutputType>
         <PackageId>MeiliSearch</PackageId>
         <Version>0.20.0</Version>
@@ -21,9 +21,15 @@
     <PropertyGroup>
         <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
+    <!-- Trim and Native AOT analyzers run on the .NET 8+ builds; netstandard2.0 compiles the same annotated sources. -->
+    <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
-        <PackageReference Include="System.Net.Http.Json" Version="6.0.2" />
+        <!-- Referenced on every target so all builds compile against the same System.Text.Json 10 API surface. -->
+        <PackageReference Include="System.Net.Http.Json" Version="10.0.12" />
+        <PackageReference Include="System.Text.Json" Version="10.0.12" />
     </ItemGroup>
 
     <ItemGroup>
