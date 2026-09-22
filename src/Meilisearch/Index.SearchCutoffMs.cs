@@ -2,6 +2,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -13,7 +15,7 @@ namespace Meilisearch
         /// <returns>Returns the search cutoff in milliseconds.</returns>
         public async Task<int?> GetSearchCutoffMsAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<int?>($"indexes/{Uid}/settings/search-cutoff-ms", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/search-cutoff-ms", _json.Info<int?>(), cancellationToken)
                 .ConfigureAwait(false);
         }
         /// <summary>
@@ -25,10 +27,10 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateSearchCutoffMsAsync(int searchCutoffMs, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PutAsJsonAsync($"indexes/{Uid}/settings/search-cutoff-ms", searchCutoffMs, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PutJsonAsync($"indexes/{Uid}/settings/search-cutoff-ms", searchCutoffMs, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -41,7 +43,7 @@ namespace Meilisearch
         {
             var responseMessage = await _http.DeleteAsync($"indexes/{Uid}/settings/search-cutoff-ms", cancellationToken)
                 .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -14,7 +16,7 @@ namespace Meilisearch
         /// <returns>Returns the synonyms setting.</returns>
         public async Task<Dictionary<string, IEnumerable<string>>> GetSynonymsAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Dictionary<string, IEnumerable<string>>>($"indexes/{Uid}/settings/synonyms", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/synonyms", _json.Info<Dictionary<string, IEnumerable<string>>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -27,9 +29,9 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateSynonymsAsync(Dictionary<string, IEnumerable<string>> synonyms, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PutAsJsonAsync($"indexes/{Uid}/settings/synonyms", synonyms, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PutJsonAsync($"indexes/{Uid}/settings/synonyms", synonyms, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -42,7 +44,7 @@ namespace Meilisearch
         {
             var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/settings/synonyms", cancellationToken)
                 .ConfigureAwait(false);
-            return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

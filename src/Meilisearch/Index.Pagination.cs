@@ -14,7 +14,7 @@ namespace Meilisearch
         /// <returns>Returns the pagination setting.</returns>
         public async Task<Pagination> GetPaginationAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Pagination>($"indexes/{Uid}/settings/pagination", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/pagination", _json.Info<Pagination>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -27,10 +27,10 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdatePaginationAsync(Pagination pagination, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync($"indexes/{Uid}/settings/pagination", pagination, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync($"indexes/{Uid}/settings/pagination", pagination, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -44,7 +44,7 @@ namespace Meilisearch
             var response = await _http.DeleteAsync($"indexes/{Uid}/settings/pagination", cancellationToken)
                 .ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

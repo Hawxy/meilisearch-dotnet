@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -20,35 +21,76 @@ namespace Meilisearch
     public class MeilisearchClient
     {
         private readonly HttpClient _http;
+        private readonly MeilisearchJson _json;
         private TaskEndpoint _taskEndpoint;
         public string ApiKey { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MeilisearchClient"/> class.
-        /// Default client for Meilisearch API.
+        /// Default client for Meilisearch API. Document types are serialized with reflection; for trimmed or
+        /// Native AOT applications use the overload that takes <see cref="JsonSerializerOptions"/>.
         /// </summary>
         /// <param name="url">URL corresponding to Meilisearch server.</param>
         /// <param name="apiKey">API Key to connect to the Meilisearch server.</param>
-        public MeilisearchClient(string url, string apiKey = default) : this(
-            new HttpClient(new MeilisearchMessageHandler(new HttpClientHandler())) { BaseAddress = url.ToSafeUri() },
-            apiKey)
+        [RequiresUnreferencedCode(MeilisearchJson.ReflectionMessage)]
+        [RequiresDynamicCode(MeilisearchJson.ReflectionMessage)]
+        public MeilisearchClient(string url, string apiKey = default)
+            : this(CreateHttpClient(url), apiKey, MeilisearchJson.CreateReflectionDefault())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MeilisearchClient"/> class.
-        /// Custom client for Meilisearch API. Use it with proper Http Client Factory.
+        /// Custom client for Meilisearch API. Use it with proper Http Client Factory. Document types are serialized
+        /// with reflection; for trimmed or Native AOT applications use the overload that takes <see cref="JsonSerializerOptions"/>.
         /// </summary>
         /// <param name="client">Injects the reusable HttpClient.</param>
         /// <param name="apiKey">API Key to connect to the Meilisearch server. Best practice is to use HttpClient default header rather than this parameter.</param>
+        [RequiresUnreferencedCode(MeilisearchJson.ReflectionMessage)]
+        [RequiresDynamicCode(MeilisearchJson.ReflectionMessage)]
         public MeilisearchClient(HttpClient client, string apiKey = default)
+            : this(client, apiKey, MeilisearchJson.CreateReflectionDefault())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MeilisearchClient"/> class with caller-supplied JSON metadata.
+        /// Set <see cref="JsonSerializerOptions.TypeInfoResolver"/> to a <see cref="System.Text.Json.Serialization.JsonSerializerContext"/>
+        /// that registers your document types; SDK types are always resolved by the SDK. Property names are written in
+        /// camelCase and read case-insensitively regardless of the supplied options.
+        /// </summary>
+        /// <param name="url">URL corresponding to Meilisearch server.</param>
+        /// <param name="apiKey">API Key to connect to the Meilisearch server, or null.</param>
+        /// <param name="jsonSerializerOptions">Options whose resolver and converters are used for document types.</param>
+        public MeilisearchClient(string url, string apiKey, JsonSerializerOptions jsonSerializerOptions)
+            : this(CreateHttpClient(url), apiKey, MeilisearchJson.Create(jsonSerializerOptions))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MeilisearchClient"/> class with a custom HttpClient and
+        /// caller-supplied JSON metadata. See <see cref="MeilisearchClient(string, string, JsonSerializerOptions)"/>.
+        /// </summary>
+        /// <param name="client">Injects the reusable HttpClient.</param>
+        /// <param name="apiKey">API Key to connect to the Meilisearch server, or null.</param>
+        /// <param name="jsonSerializerOptions">Options whose resolver and converters are used for document types.</param>
+        public MeilisearchClient(HttpClient client, string apiKey, JsonSerializerOptions jsonSerializerOptions)
+            : this(client, apiKey, MeilisearchJson.Create(jsonSerializerOptions))
+        {
+        }
+
+        private MeilisearchClient(HttpClient client, string apiKey, MeilisearchJson json)
         {
             client.BaseAddress = client.BaseAddress.OriginalString.ToSafeUri();
             _http = client;
+            _json = json;
             _http.AddApiKeyToHeader(apiKey);
             _http.AddDefaultUserAgent();
             ApiKey = apiKey;
         }
+
+        private static HttpClient CreateHttpClient(string url)
+            => new HttpClient(new MeilisearchMessageHandler(new HttpClientHandler())) { BaseAddress = url.ToSafeUri() };
 
         /// <summary>
         /// Gets the current Meilisearch version. For more details on response.
@@ -60,7 +102,7 @@ namespace Meilisearch
         {
             var response = await _http.GetAsync("version", cancellationToken).ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<MeiliSearchVersion>(cancellationToken: cancellationToken)
+            return await response.Content.ReadFromJsonAsync(_json.Info<MeiliSearchVersion>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -73,7 +115,7 @@ namespace Meilisearch
         public Index Index(string uid)
         {
             var index = new Index(uid);
-            index.WithHttpClient(_http);
+            index.WithHttpClient(_http, _json);
             return index;
         }
 
@@ -92,8 +134,7 @@ namespace Meilisearch
                 throw new ArgumentNullException("IndexUid", "IndexUid should be provided for all search queries");
             }
 
-            var responseMessage = await _http.PostAsJsonAsync("multi-search", query,
-                Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken);
+            var responseMessage = await _http.PostJsonAsync("multi-search", query, _json.RemoveNulls, cancellationToken);
             return await responseMessage.Content
                 .ReadFromJsonAsync<ISearchable<T>>(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
@@ -114,8 +155,7 @@ namespace Meilisearch
                 throw new ArgumentNullException("IndexUid", "IndexUid should be provided for all search queries");
             }
 
-            var responseMessage = await _http.PostAsJsonAsync("multi-search", query,
-                Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken);
+            var responseMessage = await _http.PostJsonAsync("multi-search", query, _json.RemoveNulls, cancellationToken);
             return await responseMessage.Content
                 .ReadFromJsonAsync<MultiSearchResult>(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
@@ -132,11 +172,10 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             var index = new Index(uid, primaryKey);
-            var responseMessage = await _http.PostJsonCustomAsync("indexes", index,
-                    Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+            var responseMessage = await _http.PostJsonAsync("indexes", index, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -194,10 +233,10 @@ namespace Meilisearch
             var response = await _http.GetAsync(uri, cancellationToken).ConfigureAwait(false);
 
             var content = await response.Content
-                .ReadFromJsonAsync<ResourceResults<IEnumerable<Index>>>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<ResourceResults<IEnumerable<Index>>>(), cancellationToken)
                 .ConfigureAwait(false);
             content.Results
-                .Select(p => p.WithHttpClient(_http))
+                .Select(p => p.WithHttpClient(_http, _json))
                 .ToList();
             return content;
         }
@@ -276,7 +315,7 @@ namespace Meilisearch
         /// <returns>Returns stats of all indexes.</returns>
         public async Task<Stats> GetStatsAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Stats>("stats", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync("stats", _json.Info<Stats>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -289,7 +328,7 @@ namespace Meilisearch
         {
             var response = await _http.GetAsync("health", cancellationToken).ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<MeiliSearchHealth>(cancellationToken: cancellationToken);
+            return await response.Content.ReadFromJsonAsync(_json.Info<MeiliSearchHealth>(), cancellationToken);
         }
 
         /// <summary>
@@ -319,7 +358,7 @@ namespace Meilisearch
         {
             var response = await _http.PostAsync("dumps", default, cancellationToken).ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -331,7 +370,7 @@ namespace Meilisearch
         public async Task<TaskInfo> CreateSnapshotAsync(CancellationToken cancellationToken = default)
         {
             var response = await _http.PostAsync("snapshots", default, cancellationToken).ConfigureAwait(false);
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -345,7 +384,7 @@ namespace Meilisearch
         {
             var uri = query.ToQueryString(uri: "keys");
             return await _http
-                .GetFromJsonAsync<ResourceResults<IEnumerable<Key>>>(uri, cancellationToken: cancellationToken)
+                .GetFromJsonAsync(uri, _json.Info<ResourceResults<IEnumerable<Key>>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -357,7 +396,7 @@ namespace Meilisearch
         /// <returns>Returns the API key information.</returns>
         public async Task<Key> GetKeyAsync(string keyOrUid, CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Key>($"keys/{keyOrUid}", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"keys/{keyOrUid}", _json.Info<Key>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -370,11 +409,10 @@ namespace Meilisearch
         public async Task<Key> CreateKeyAsync(Key keyOptions, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PostAsJsonAsync("keys", keyOptions, Constants.JsonSerializerOptionsWriteNulls,
-                        cancellationToken: cancellationToken)
+                await _http.PostJsonAsync("keys", keyOptions, _json.WriteNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<Key>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<Key>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -386,12 +424,11 @@ namespace Meilisearch
         public async Task<bool> EnableDynamicSearchRules(CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync("experimental-features", new ExperimentalFeaturesPatch { DynamicSearchRules = true },
-                        cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync("experimental-features", new ExperimentalFeaturesPatch { DynamicSearchRules = true }, _json.WriteNulls, cancellationToken)
                     .ConfigureAwait(false);
 
             var result = await responseMessage.Content
-                .ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<JsonDocument>(), cancellationToken)
                 .ConfigureAwait(false);
 
             return result.RootElement.TryGetProperty("dynamicSearchRules", out var dsrElement) &&
@@ -408,12 +445,11 @@ namespace Meilisearch
         public async Task<TaskInfo> CreateOrUpdateDynamicSearchRuleAsync(string uid, PatchDynamicSearchRule dynamicSearchRule, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync($"dynamic-search-rules/{uid}", dynamicSearchRule, Constants.JsonSerializerOptionsRemoveNulls,
-                    cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync($"dynamic-search-rules/{uid}", dynamicSearchRule, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -428,12 +464,11 @@ namespace Meilisearch
             if (query == default) query = new DynamicSearchRulesQuery();
 
             var responseMessage =
-                await _http.PostAsJsonAsync("dynamic-search-rules", query, Constants.JsonSerializerOptionsRemoveNulls,
-                    cancellationToken: cancellationToken)
+                await _http.PostJsonAsync("dynamic-search-rules", query, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<ResourceResults<IEnumerable<DynamicSearchRule>>>(Constants.JsonSerializerOptionsWriteNulls, cancellationToken)
+                .ReadFromJsonAsync(_json.Info<ResourceResults<IEnumerable<DynamicSearchRule>>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -450,7 +485,7 @@ namespace Meilisearch
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<DynamicSearchRule>(Constants.JsonSerializerOptionsWriteNulls, cancellationToken)
+                .ReadFromJsonAsync(_json.Info<DynamicSearchRule>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -467,7 +502,7 @@ namespace Meilisearch
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -483,7 +518,7 @@ namespace Meilisearch
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -525,11 +560,10 @@ namespace Meilisearch
             var key = new Key { Name = name, Description = description };
 
             var responseMessage =
-                await _http.PatchAsJsonAsync($"keys/{keyOrUid}", key, Constants.JsonSerializerOptionsRemoveNulls,
-                        cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync($"keys/{keyOrUid}", key, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<Key>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<Key>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -555,11 +589,10 @@ namespace Meilisearch
         public async Task<TaskInfo> SwapIndexesAsync(List<IndexSwap> indexes,
             CancellationToken cancellationToken = default)
         {
-            var response = await _http.PostAsJsonAsync("swap-indexes", indexes,
-                    Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+            var response = await _http.PostJsonAsync("swap-indexes", indexes, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -588,7 +621,7 @@ namespace Meilisearch
             if (_taskEndpoint == null)
             {
                 _taskEndpoint = new TaskEndpoint();
-                _taskEndpoint.WithHttpClient(_http);
+                _taskEndpoint.WithHttpClient(_http, _json);
             }
 
             return _taskEndpoint;

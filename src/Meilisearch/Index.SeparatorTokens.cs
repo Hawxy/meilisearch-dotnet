@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -14,7 +16,7 @@ namespace Meilisearch
         /// <returns>Returns all the configured separator tokens.</returns>
         public async Task<List<string>> GetSeparatorTokensAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<List<string>>($"indexes/{Uid}/settings/separator-tokens", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/separator-tokens", _json.Info<List<string>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -27,9 +29,9 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateSeparatorTokensAsync(IEnumerable<string> separatorTokens, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PutAsJsonAsync($"indexes/{Uid}/settings/separator-tokens", separatorTokens, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PutJsonAsync($"indexes/{Uid}/settings/separator-tokens", separatorTokens, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -41,7 +43,7 @@ namespace Meilisearch
         {
             var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/settings/separator-tokens", cancellationToken)
                 .ConfigureAwait(false);
-            return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

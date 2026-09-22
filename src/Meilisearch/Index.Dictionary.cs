@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -14,7 +16,7 @@ namespace Meilisearch
         /// <returns>Returns the dictionary.</returns>
         public async Task<IEnumerable<string>> GetDictionaryAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<string[]>($"indexes/{Uid}/settings/dictionary", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/dictionary", _json.Info<string[]>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -27,9 +29,9 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateDictionaryAsync(IEnumerable<string> dictionary, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PutAsJsonAsync($"indexes/{Uid}/settings/dictionary", dictionary, cancellationToken: cancellationToken)
+                await _http.PutJsonAsync($"indexes/{Uid}/settings/dictionary", dictionary, _json.WriteNulls, cancellationToken)
                     .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -40,7 +42,7 @@ namespace Meilisearch
         public async Task<TaskInfo> ResetDictionaryAsync(CancellationToken cancellationToken = default)
         {
             var httpResponse = await _http.DeleteAsync($"indexes/{Uid}/settings/dictionary", cancellationToken).ConfigureAwait(false);
-            return await httpResponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await httpResponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Meilisearch
         /// <returns>Returns the faceting setting.</returns>
         public async Task<Faceting> GetFacetingAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Faceting>($"indexes/{Uid}/settings/faceting", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/faceting", _json.Info<Faceting>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -27,10 +27,10 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateFacetingAsync(Faceting faceting, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync($"indexes/{Uid}/settings/faceting", faceting, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync($"indexes/{Uid}/settings/faceting", faceting, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -44,7 +44,7 @@ namespace Meilisearch
             var response = await _http.DeleteAsync($"indexes/{Uid}/settings/faceting", cancellationToken)
                 .ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }
