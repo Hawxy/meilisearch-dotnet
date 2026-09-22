@@ -30,6 +30,8 @@
         <!-- Referenced on every target so all builds compile against the same System.Text.Json 10 API surface. -->
         <PackageReference Include="System.Net.Http.Json" Version="10.0.12" />
         <PackageReference Include="System.Text.Json" Version="10.0.12" />
+        <!-- Source-only: supplies the trim/AOT annotation attributes on netstandard2.0. -->
+        <PackageReference Include="Polyfill" Version="11.4.0" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
