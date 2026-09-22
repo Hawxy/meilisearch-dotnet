@@ -19,7 +19,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
       - name: Install dependencies
         run: dotnet restore
       - name: Build
@@ -40,11 +40,11 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
       - name: Check with dotnet-format
         run: dotnet format --version
       - name: Check with dotnet-format
-        run: dotnet format --verbosity normal --verify-no-changes
+        run: dotnet format --verbosity normal --verify-no-changes --exclude-diagnostics IL2026 IL2067 IL2075 IL3050
 
   yaml-lint:
     name: Yaml linting check

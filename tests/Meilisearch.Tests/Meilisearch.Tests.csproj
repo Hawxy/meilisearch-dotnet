@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -25,6 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="Datasets\dynamic_search_rule.json" CopyToOutputDirectory="PreserveNewest"/>
+        <None Update="Datasets\dynamic_search_rule_with_optional_values.json" CopyToOutputDirectory="PreserveNewest"/>
         <None Update="Datasets\movies_for_faceting.json" CopyToOutputDirectory="PreserveNewest"/>
         <None Update="Datasets\movies_for_vector.json" CopyToOutputDirectory="PreserveNewest"/>
         <None Update="Datasets\movies_with_info.json" CopyToOutputDirectory="PreserveNewest"/>

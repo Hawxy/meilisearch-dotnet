@@ -173,7 +173,7 @@ namespace Meilisearch.Tests
 
         public static TheoryData<object> PossibleSearchRules()
         {
-            IEnumerable<object> SubPossibleSearchRules()
+            static IEnumerable<object> SubPossibleSearchRules()
             {
                 // {'*': {}}
                 yield return new Dictionary<string, object>

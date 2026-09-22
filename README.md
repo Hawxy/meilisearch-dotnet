@@ -49,7 +49,7 @@ For general information on how to use Meilisearch—such as our API reference, t
 
 ## 🔧 Installation
 
-This package targets .NET Standard 2.1.
+This package targets .NET Standard 2.0, .NET 8 and .NET 10. The .NET 8 and .NET 10 builds are annotated for trimming and Native AOT.
 
 Using the [.NET Core command-line interface (CLI) tools](https://docs.microsoft.com/en-us/dotnet/core/tools/):
 
