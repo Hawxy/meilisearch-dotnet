@@ -1,14 +1,25 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using Meilisearch.Json;
 
 namespace Meilisearch
 {
     /// <summary>
-    /// The json converter factory for <see cref="ISearchable{T}"/>
+    /// The json converter factory for <see cref="ISearchable{T}"/>. Creates <see cref="ISearchableJsonConverter{T}"/>
+    /// for the requested hit type at runtime, so it is only usable with reflection-based serialization.
+    /// The client does not use it; it serves consumers who serialize <see cref="ISearchable{T}"/> themselves.
     /// </summary>
+    [RequiresDynamicCode(Message)]
+    [RequiresUnreferencedCode(Message)]
     public class ISearchableJsonConverterFactory : JsonConverterFactory
     {
+        private const string Message =
+            "ISearchableJsonConverterFactory creates converters for arbitrary hit types at runtime. " +
+            "Serialize SearchResult<T> or PaginatedSearchResult<T> directly with source-generated metadata instead.";
+
         /// <inheritdoc/>
         public override bool CanConvert(Type typeToConvert)
         {
@@ -30,7 +41,8 @@ namespace Meilisearch
     }
 
     /// <summary>
-    /// The json converter for <see cref="ISearchable{T}"/>
+    /// The json converter for <see cref="ISearchable{T}"/>. Requires <see cref="SearchResult{T}"/> and
+    /// <see cref="PaginatedSearchResult{T}"/> to be resolvable through the serializer options.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class ISearchableJsonConverter<T> : JsonConverter<ISearchable<T>>
@@ -38,10 +50,10 @@ namespace Meilisearch
         /// <inheritdoc/>
         public override ISearchable<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var document = JsonSerializer.Deserialize<JsonElement>(ref reader, options);
+            var document = JsonElement.ParseValue(ref reader);
             return document.TryGetProperty("page", out _) || document.TryGetProperty("hitsPerPage", out _)
-                ? document.Deserialize<PaginatedSearchResult<T>>(options)
-                : (ISearchable<T>)document.Deserialize<SearchResult<T>>(options);
+                ? document.Deserialize(MeilisearchJson.TypeInfo<PaginatedSearchResult<T>>(options))
+                : (ISearchable<T>)document.Deserialize(MeilisearchJson.TypeInfo<SearchResult<T>>(options));
         }
 
         /// <inheritdoc/>
@@ -49,15 +61,15 @@ namespace Meilisearch
         {
             if (value is PaginatedSearchResult<T> paginated)
             {
-                JsonSerializer.Serialize(writer, paginated, options);
+                JsonSerializer.Serialize(writer, paginated, MeilisearchJson.TypeInfo<PaginatedSearchResult<T>>(options));
             }
             else if (value is SearchResult<T> normal)
             {
-                JsonSerializer.Serialize(writer, normal, options);
+                JsonSerializer.Serialize(writer, normal, MeilisearchJson.TypeInfo<SearchResult<T>>(options));
             }
             else
             {
-                JsonSerializer.Serialize(writer, (object)value, options);
+                JsonSerializer.Serialize(writer, value, options.GetTypeInfo(value.GetType()));
             }
         }
     }

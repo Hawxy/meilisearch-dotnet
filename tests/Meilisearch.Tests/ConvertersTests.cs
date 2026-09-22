@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 
 using Meilisearch.Converters;
+using Meilisearch.Json;
 using Meilisearch.QueryParameters;
 
 using Xunit;
@@ -12,8 +13,8 @@ namespace Meilisearch.Tests
 {
     public class ConvertersTests
     {
-        private static readonly JsonSerializerOptions RemoveNulls = Constants.JsonSerializerOptionsRemoveNulls;
-        private static readonly JsonSerializerOptions WriteNulls = Constants.JsonSerializerOptionsWriteNulls;
+        private static readonly JsonSerializerOptions RemoveNulls = MeilisearchJson.Default.RemoveNulls;
+        private static readonly JsonSerializerOptions WriteNulls = MeilisearchJson.Default.WriteNulls;
 
         [Fact]
         public void OptionalWritesOnlyProvidedValues()
