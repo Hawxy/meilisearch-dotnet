@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 
 using Meilisearch.Converters;
@@ -57,7 +56,12 @@ namespace Meilisearch
         /// <summary>
         /// Serializes the rules to JSON without reflection over their runtime types.
         /// </summary>
-        internal string ToJson()
+        internal string ToJson() => ToJsonElement().GetRawText();
+
+        /// <summary>
+        /// Serializes the rules to a detached <see cref="JsonElement"/> without reflection over their runtime types.
+        /// </summary>
+        internal JsonElement ToJsonElement()
         {
             var buffer = new ArrayBufferWriter<byte>();
             using (var writer = new Utf8JsonWriter(buffer))
@@ -65,7 +69,10 @@ namespace Meilisearch
                 UntypedJsonConverter.WriteValue(writer, _rules, null);
             }
 
-            return Encoding.UTF8.GetString(buffer.WrittenSpan.ToArray());
+            using (var document = JsonDocument.Parse(buffer.WrittenMemory))
+            {
+                return document.RootElement.Clone();
+            }
         }
     }
 }

@@ -1,9 +1,8 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Meilisearch
@@ -31,30 +30,25 @@ namespace Meilisearch
                 throw new MeilisearchTenantTokenExpired();
             }
 
-            var rules = searchRules.ToClaim();
-            var isArray = rules is string[];
-            var valueType = isArray ? JsonClaimValueTypes.JsonArray : JsonClaimValueTypes.Json;
-
-            var identity = new ClaimsIdentity();
-            identity.AddClaim(new Claim("apiKeyUid", apiKeyUid));
-            identity.AddClaim(new Claim("searchRules", searchRules.ToJson(), valueType));
-
             var signingKey = Encoding.ASCII.GetBytes(apiKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = identity,
+                Claims = new Dictionary<string, object>
+                {
+                    ["apiKeyUid"] = apiKeyUid,
+                    ["searchRules"] = searchRules.ToJsonElement(),
+                },
                 Expires = expiresAt,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKey), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKey), SecurityAlgorithms.HmacSha256)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler
+            var tokenHandler = new JsonWebTokenHandler
             {
                 SetDefaultTimesOnTokenCreation = false
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            return tokenHandler.CreateToken(tokenDescriptor);
         }
     }
 }
