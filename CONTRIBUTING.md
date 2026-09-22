@@ -83,6 +83,13 @@ dotnet format Meilisearch.sln
 
 Styles are the ones commonly used by the .NET Community. The code base uses the latest C# version of the SDK in CI and must keep compiling for `.NET Standard 2.0`, so avoid features that need newer runtime support (for example `init` accessors and records).
 
+The .NET 8 and .NET 10 builds of the library treat trim and Native AOT analyzer warnings as errors. Every request and response type must be registered in `MeilisearchJsonContext`, and document types owned by callers are serialized through the metadata the caller supplies. The `tests/Meilisearch.AotSmoke` project publishes a Native AOT binary in CI and runs a full scenario against Meilisearch; run it locally with a native toolchain installed:
+
+```bash
+dotnet publish tests/Meilisearch.AotSmoke -c Release -r linux-x64 -f net10.0 -o artifacts/aot-smoke
+./artifacts/aot-smoke/Meilisearch.AotSmoke
+```
+
 You can check this two projects to have an idea how the code should looks like :
 * [Dapper](https://github.com/DapperLib/Dapper)
 * [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis)

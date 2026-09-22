@@ -38,6 +38,7 @@
   - [Get Task information](#get-task-information)
   - [Search](#search)
 - [🧰 Use a Custom HTTP Client](#-use-a-custom-http-client)
+- [🪶 Native AOT and trimming](#-native-aot-and-trimming)
 - [⚙️ Contributing](#️-contributing)
 
 ## 📖 Documentation
@@ -387,6 +388,38 @@ var client = new MeilisearchClient(_httpClient);
 ```
 
 Where `ClientFactory` is declared [like this](/tests/Meilisearch.Tests/ClientFactory.cs).
+
+## 🪶 Native AOT and trimming
+
+The .NET 8 and .NET 10 builds are annotated for trimming and Native AOT and produce no trim or AOT warnings. To use the client in a trimmed or Native AOT application, describe your document types with a `JsonSerializerContext` and pass it through `JsonSerializerOptions`:
+
+```c#
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+[JsonSerializable(typeof(Movie))]
+internal partial class AppJsonContext : JsonSerializerContext
+{
+}
+
+var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { TypeInfoResolver = AppJsonContext.Default };
+var client = new MeilisearchClient("http://localhost:7700", "masterKey", options);
+```
+
+The client supplies the metadata for its own request and response types, so you only register the types you send as documents or read back as hits. Documents are always written in camelCase; naming policy and case sensitivity of the supplied options are overridden. A type that is not registered fails with a `NotSupportedException` naming the type.
+
+The constructors without `JsonSerializerOptions` serialize documents with reflection. They keep working in regular applications and are marked with `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`, so a trimmed or Native AOT build warns when they are used.
+
+`Filter` properties and other untyped members accept strings, string arrays, nested arrays and string-keyed dictionaries. Other object types throw a `JsonException`.
+
+The [tests/Meilisearch.AotSmoke](/tests/Meilisearch.AotSmoke) project publishes a Native AOT binary and runs a full scenario against Meilisearch in CI.
+
+### Upgrading from 0.20 <!-- omit in toc -->
+
+- `SearchQuery.Filter`, `FacetSearchQuery.Filter`, `SimilarDocumentsQuery.Filter` and `TaskResource.Details` are typed `object` instead of `dynamic`.
+- `BaseAction` uses System.Text.Json polymorphism; `BaseObjectWithTypesConverter<,>`, `DynamicSearchRuleActionConverter` and `OptionalJsonConverterFactory` are removed, and `BaseAction.Type` is no longer a serialized property.
+- `ISearchableJsonConverterFactory` requires reflection-based serialization and is annotated accordingly.
+- The package references `System.Text.Json` 10 and `System.Net.Http.Json` 10 on every target, and `Microsoft.IdentityModel.JsonWebTokens` replaces `System.IdentityModel.Tokens.Jwt`.
 
 ## ⚙️ Contributing
 
