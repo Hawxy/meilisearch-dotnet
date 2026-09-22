@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Json;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -44,7 +46,7 @@ namespace Meilisearch
                 {
                     if (response.Content.Headers.ContentLength != 0)
                     {
-                        var content = await response.Content.ReadFromJsonAsync<MeilisearchApiErrorContent>(cancellationToken: cancellationToken).ConfigureAwait(false);
+                        var content = await response.Content.ReadFromJsonAsync(MeilisearchJsonContext.Default.MeilisearchApiErrorContent, cancellationToken).ConfigureAwait(false);
                         throw new MeilisearchApiError(content);
                     }
 

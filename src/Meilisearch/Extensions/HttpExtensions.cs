@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Json;
+
 namespace Meilisearch.Extensions
 {
     /// <summary>
@@ -90,5 +92,26 @@ namespace Meilisearch.Extensions
 
             return payload;
         }
+
+        /// <summary>
+        /// POSTs <paramref name="body"/> as JSON using the metadata that <paramref name="options"/> resolves for <typeparamref name="T"/>.
+        /// </summary>
+        internal static Task<HttpResponseMessage> PostJsonAsync<T>(this HttpClient client, string uri, T body, JsonSerializerOptions options, CancellationToken cancellationToken)
+            => client.PostAsync(uri, CreateJsonContent(body, options), cancellationToken);
+
+        /// <summary>
+        /// PUTs <paramref name="body"/> as JSON using the metadata that <paramref name="options"/> resolves for <typeparamref name="T"/>.
+        /// </summary>
+        internal static Task<HttpResponseMessage> PutJsonAsync<T>(this HttpClient client, string uri, T body, JsonSerializerOptions options, CancellationToken cancellationToken)
+            => client.PutAsync(uri, CreateJsonContent(body, options), cancellationToken);
+
+        /// <summary>
+        /// PATCHes <paramref name="body"/> as JSON using the metadata that <paramref name="options"/> resolves for <typeparamref name="T"/>.
+        /// </summary>
+        internal static Task<HttpResponseMessage> PatchJsonAsync<T>(this HttpClient client, string uri, T body, JsonSerializerOptions options, CancellationToken cancellationToken)
+            => client.PatchAsync(uri, CreateJsonContent(body, options), cancellationToken);
+
+        private static JsonContent CreateJsonContent<T>(T body, JsonSerializerOptions options)
+            => JsonContent.Create(body, MeilisearchJson.TypeInfo<T>(options), new MediaTypeHeaderValue("application/json"));
     }
 }

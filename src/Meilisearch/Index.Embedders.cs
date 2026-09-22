@@ -17,9 +17,7 @@ namespace Meilisearch
         public async Task<Dictionary<string, Embedder>> GetEmbeddersAsync(CancellationToken cancellationToken = default)
         {
             return await _http
-                .GetFromJsonAsync<Dictionary<string, Embedder>>(
-                    $"indexes/{Uid}/settings/embedders",
-                    cancellationToken: cancellationToken)
+                .GetFromJsonAsync($"indexes/{Uid}/settings/embedders", _json.Info<Dictionary<string, Embedder>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -32,15 +30,13 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateEmbeddersAsync(Dictionary<string, Embedder> embedders, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync(
+                await _http.PatchJsonAsync(
                         $"indexes/{Uid}/settings/embedders",
-                        embedders,
-                        Constants.JsonSerializerOptionsRemoveNulls,
-                        cancellationToken: cancellationToken)
+                        embedders, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -56,7 +52,7 @@ namespace Meilisearch
                 .ConfigureAwait(false);
 
             return await response.Content
-                .ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
     }

@@ -5,6 +5,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+using Meilisearch.Json;
 using Meilisearch.QueryParameters;
 
 namespace Meilisearch
@@ -16,6 +18,7 @@ namespace Meilisearch
     public class TaskEndpoint
     {
         private HttpClient _http;
+        private MeilisearchJson _json;
 
         /// <summary>
         /// Gets the tasks.
@@ -26,7 +29,7 @@ namespace Meilisearch
         public async Task<TasksResults<IEnumerable<TaskResource>>> GetTasksAsync(TasksQuery query = default, CancellationToken cancellationToken = default)
         {
             var uri = query.ToQueryString(uri: "tasks");
-            return await _http.GetFromJsonAsync<TasksResults<IEnumerable<TaskResource>>>(uri, cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync(uri, _json.Info<TasksResults<IEnumerable<TaskResource>>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -42,7 +45,7 @@ namespace Meilisearch
 
             var response = await _http.PostAsync(uri, null, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -57,7 +60,7 @@ namespace Meilisearch
 
             var response = await _http.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -68,7 +71,7 @@ namespace Meilisearch
         /// <returns>Returns the task.</returns>
         public async Task<TaskResource> GetTaskAsync(int taskUid, CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<TaskResource>($"tasks/{taskUid}", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"tasks/{taskUid}", _json.Info<TaskResource>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -80,7 +83,7 @@ namespace Meilisearch
         /// <returns>Returns a list of tasks of an index.</returns>
         public async Task<TasksResults<IEnumerable<TaskResource>>> GetIndexTasksAsync(string indexUid, CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<TasksResults<IEnumerable<TaskResource>>>($"tasks?indexUid={indexUid}", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"tasks?indexUid={indexUid}", _json.Info<TasksResults<IEnumerable<TaskResource>>>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -116,14 +119,15 @@ namespace Meilisearch
         }
 
         /// <summary>
-        /// Initializes the Index with HTTP client. Only for internal usage.
+        /// Initializes the endpoint with the HTTP client and serializer options. Only for internal usage.
         /// </summary>
-        /// <param name="http">HttpRequest instance used.</param>
+        /// <param name="http">HttpClient used for requests.</param>
+        /// <param name="json">Serializer options shared with the owning client.</param>
         /// <returns>The same object with the initialization.</returns>
-        // internal Index WithHttpClient(HttpClient client)
-        internal TaskEndpoint WithHttpClient(HttpClient http)
+        internal TaskEndpoint WithHttpClient(HttpClient http, MeilisearchJson json)
         {
             _http = http;
+            _json = json;
             return this;
         }
     }

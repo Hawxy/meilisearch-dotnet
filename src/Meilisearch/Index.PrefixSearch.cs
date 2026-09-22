@@ -2,6 +2,8 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -13,7 +15,7 @@ namespace Meilisearch
         /// <returns>Returns the prefix search setting.</returns>
         public async Task<string> GetPrefixSearchAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<string>($"indexes/{Uid}/settings/prefix-search", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings/prefix-search", _json.Info<string>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -26,10 +28,10 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdatePrefixSearchAsync(string prefixSearch, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PutAsJsonAsync($"indexes/{Uid}/settings/prefix-search", prefixSearch, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PutJsonAsync($"indexes/{Uid}/settings/prefix-search", prefixSearch, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -43,7 +45,7 @@ namespace Meilisearch
             var response = await _http.DeleteAsync($"indexes/{Uid}/settings/prefix-search", cancellationToken)
                 .ConfigureAwait(false);
 
-            return await response.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await response.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }

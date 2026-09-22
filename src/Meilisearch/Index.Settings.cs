@@ -14,7 +14,7 @@ namespace Meilisearch
         /// <returns>Returns all the settings.</returns>
         public async Task<Settings> GetSettingsAsync(CancellationToken cancellationToken = default)
         {
-            return await _http.GetFromJsonAsync<Settings>($"indexes/{Uid}/settings", cancellationToken: cancellationToken)
+            return await _http.GetFromJsonAsync($"indexes/{Uid}/settings", _json.Info<Settings>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -28,9 +28,9 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateSettingsAsync(Settings settings, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync($"indexes/{Uid}/settings", settings, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+                await _http.PatchJsonAsync($"indexes/{Uid}/settings", settings, _json.RemoveNulls, cancellationToken)
                     .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Meilisearch
         public async Task<TaskInfo> ResetSettingsAsync(CancellationToken cancellationToken = default)
         {
             var httpResponse = await _http.DeleteAsync($"indexes/{Uid}/settings", cancellationToken).ConfigureAwait(false);
-            return await httpResponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await httpResponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken).ConfigureAwait(false);
         }
     }
 }
