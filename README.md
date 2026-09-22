@@ -414,13 +414,6 @@ The constructors without `JsonSerializerOptions` serialize documents with reflec
 
 The [tests/Meilisearch.AotSmoke](/tests/Meilisearch.AotSmoke) project publishes a Native AOT binary and runs a full scenario against Meilisearch in CI.
 
-### Upgrading from 0.20 <!-- omit in toc -->
-
-- `SearchQuery.Filter`, `FacetSearchQuery.Filter`, `SimilarDocumentsQuery.Filter` and `TaskResource.Details` are typed `object` instead of `dynamic`.
-- `BaseAction` uses System.Text.Json polymorphism; `BaseObjectWithTypesConverter<,>`, `DynamicSearchRuleActionConverter` and `OptionalJsonConverterFactory` are removed, and `BaseAction.Type` is no longer a serialized property.
-- `ISearchableJsonConverterFactory` requires reflection-based serialization and is annotated accordingly.
-- The package references `System.Text.Json` 10 and `System.Net.Http.Json` 10 on every target, and `Microsoft.IdentityModel.JsonWebTokens` replaces `System.IdentityModel.Tokens.Jwt`.
-
 ## ⚙️ Contributing
 
 Any new contribution is more than welcome in this project!
