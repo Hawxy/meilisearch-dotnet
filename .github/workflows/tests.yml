@@ -44,7 +44,7 @@ jobs:
       - name: Check with dotnet-format
         run: dotnet format --version
       - name: Check with dotnet-format
-        run: dotnet format --verbosity normal --verify-no-changes --exclude-diagnostics IL2026 IL2067 IL2075 IL3050
+        run: dotnet format --verbosity normal --verify-no-changes
 
   yaml-lint:
     name: Yaml linting check

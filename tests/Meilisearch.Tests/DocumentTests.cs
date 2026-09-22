@@ -290,7 +290,7 @@ namespace Meilisearch.Tests
             index.PrimaryKey.Should().BeNull();
 
             // Add the documents
-            var task = await index.AddDocumentsAsync(new[] { new { Key = "1", Name = "Ironman" } }, "key");
+            var task = await index.AddDocumentsAsync(new[] { new KeyedMovie { Key = "1", Name = "Ironman" } }, "key");
             await index.WaitForTaskAsync(task.TaskUid);
             task.TaskUid.Should().BeGreaterOrEqualTo(0);
 
@@ -534,7 +534,7 @@ namespace Meilisearch.Tests
             index.PrimaryKey.Should().BeNull();
 
             // Add the documents
-            var task = await index.UpdateDocumentsAsync(new[] { new { Key = "1", Name = "Ironman" } }, "key");
+            var task = await index.UpdateDocumentsAsync(new[] { new KeyedMovie { Key = "1", Name = "Ironman" } }, "key");
             await index.WaitForTaskAsync(task.TaskUid);
             task.TaskUid.Should().BeGreaterOrEqualTo(0);
 

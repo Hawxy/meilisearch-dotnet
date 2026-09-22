@@ -2,6 +2,9 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Meilisearch.Extensions;
+using Meilisearch.Json;
+
 namespace Meilisearch
 {
     public partial class Index
@@ -18,16 +21,15 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             var responseMessage = await _http
-                .PostAsJsonAsync(
-                    $"indexes/{Uid}/similar",
-                    query,
-                    Constants.JsonSerializerOptionsRemoveNulls,
-                    cancellationToken: cancellationToken)
+                .PostJsonAsync($"indexes/{Uid}/similar", query, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
-            return await responseMessage.Content
-                .ReadFromJsonAsync<SimilarDocumentsResult<T>>(cancellationToken: cancellationToken)
+            var envelope = await responseMessage.Content
+                .ReadFromJsonAsync(_json.SimilarDocumentsEnvelopeInfo<T>(), cancellationToken)
                 .ConfigureAwait(false);
+
+
+            return envelope?.ToResult();
         }
     }
 }

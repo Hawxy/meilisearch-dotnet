@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Meilisearch
@@ -7,6 +8,10 @@ namespace Meilisearch
     /// Wrapper for Search Results.
     /// </summary>
     /// <typeparam name="T">Hit type.</typeparam>
+    // The factory is only instantiated by reflection-based serializers, which report their own trim warnings.
+    // The client reads search responses through source-generated envelopes and never constructs it.
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Only reflection-based serialization instantiates the converter factory.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Only reflection-based serialization instantiates the converter factory.")]
     [JsonConverter(typeof(ISearchableJsonConverterFactory))]
     public interface ISearchable<T>
     {

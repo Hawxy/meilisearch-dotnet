@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Meilisearch.Extensions;
+using Meilisearch.Json;
 using Meilisearch.QueryParameters;
 
 namespace Meilisearch
@@ -27,9 +28,9 @@ namespace Meilisearch
             HttpResponseMessage responseMessage;
             var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
-            responseMessage = await _http.PostJsonCustomAsync(uri, documents, cancellationToken: cancellationToken)
+            responseMessage = await _http.PostJsonAsync(uri, documents, _json.ItemsInfo<T>(), cancellationToken)
                 .ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -47,7 +48,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -70,7 +71,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -88,7 +89,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -105,7 +106,7 @@ namespace Meilisearch
             int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
-            foreach (var chunk in documents.GetChunks(batchSize))
+            foreach (var chunk in documents.Chunk(batchSize))
             {
                 tasks.Add(await AddDocumentsAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
             }
@@ -171,10 +172,10 @@ namespace Meilisearch
             var uri = new QueryStringBuilder().Add("primaryKey", primaryKey).Build($"indexes/{Uid}/documents");
 
             responseMessage = await _http
-                .PutJsonCustomAsync(uri, documents, Constants.JsonSerializerOptionsRemoveNulls, cancellationToken)
+                .PutJsonAsync(uri, documents, _json.ItemsInfoRemoveNulls<T>(), cancellationToken)
                 .ConfigureAwait(false);
 
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -192,7 +193,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Json);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -210,7 +211,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Csv);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -228,7 +229,7 @@ namespace Meilisearch
 
             var content = new StringContent(documents, Encoding.UTF8, ContentType.Ndjson);
             var responseMessage = await _http.PutAsync(uri, content, cancellationToken).ConfigureAwait(false);
-            return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await responseMessage.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -245,7 +246,7 @@ namespace Meilisearch
             int batchSize = 1000, string primaryKey = default, CancellationToken cancellationToken = default)
         {
             var tasks = new List<TaskInfo>();
-            foreach (var chunk in documents.GetChunks(batchSize))
+            foreach (var chunk in documents.Chunk(batchSize))
             {
                 tasks.Add(await UpdateDocumentsAsync(chunk, primaryKey, cancellationToken).ConfigureAwait(false));
             }
@@ -311,7 +312,7 @@ namespace Meilisearch
             }
 
             return await _http
-                .GetFromJsonAsync<T>(uri, cancellationToken: cancellationToken)
+                .GetFromJsonAsync(uri, _json.Info<T>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -345,12 +346,13 @@ namespace Meilisearch
                 {
                     //Use the fetch route
                     var uri = $"indexes/{Uid}/documents/fetch";
-                    var result = await _http.PostAsJsonAsync(uri, query, Constants.JsonSerializerOptionsRemoveNulls,
-                            cancellationToken: cancellationToken)
+                    var result = await _http.PostJsonAsync(uri, query, _json.RemoveNulls, cancellationToken)
                         .ConfigureAwait(false);
-                    return await result.Content
-                        .ReadFromJsonAsync<ResourceResults<IEnumerable<T>>>(cancellationToken: cancellationToken)
+                    var envelope = await result.Content
+                        .ReadFromJsonAsync(_json.ResourceResultsEnvelopeInfo<T>(), cancellationToken)
                         .ConfigureAwait(false);
+
+                    return envelope?.ToResourceResults();
                 }
                 catch (MeilisearchCommunicationError e)
                 {
@@ -362,9 +364,12 @@ namespace Meilisearch
             {
                 var uri = query.ToQueryString(uri: $"indexes/{Uid}/documents");
 
-                return await _http
-                    .GetFromJsonAsync<ResourceResults<IEnumerable<T>>>(uri, cancellationToken: cancellationToken)
+                var envelope = await _http
+                    .GetFromJsonAsync(uri, _json.ResourceResultsEnvelopeInfo<T>(), cancellationToken)
                     .ConfigureAwait(false);
+
+
+                return envelope?.ToResourceResults();
             }
         }
 
@@ -379,7 +384,7 @@ namespace Meilisearch
         {
             var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/documents/{documentId}", cancellationToken)
                 .ConfigureAwait(false);
-            return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -405,10 +410,9 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             var httpresponse =
-                await _http.PostAsJsonAsync($"indexes/{Uid}/documents/delete-batch", documentIds,
-                        cancellationToken: cancellationToken)
+                await _http.PostJsonAsync($"indexes/{Uid}/documents/delete-batch", documentIds, _json.WriteNulls, cancellationToken)
                     .ConfigureAwait(false);
-            return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -425,11 +429,9 @@ namespace Meilisearch
             try
             {
                 var httpresponse =
-                    await _http.PostAsJsonAsync($"indexes/{Uid}/documents/delete", query,
-                            Constants.JsonSerializerOptionsRemoveNulls,
-                            cancellationToken: cancellationToken)
+                    await _http.PostJsonAsync($"indexes/{Uid}/documents/delete", query, _json.RemoveNulls, cancellationToken)
                         .ConfigureAwait(false);
-                return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+                return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (MeilisearchCommunicationError e)
@@ -461,7 +463,7 @@ namespace Meilisearch
         {
             var httpresponse = await _http.DeleteAsync($"indexes/{Uid}/documents", cancellationToken)
                 .ConfigureAwait(false);
-            return await httpresponse.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken)
+            return await httpresponse.Content.ReadFromJsonAsync(_json.Info<TaskInfo>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -489,13 +491,15 @@ namespace Meilisearch
 
             body.IndexUid = default;
 
-            var responseMessage = await _http.PostAsJsonAsync($"indexes/{Uid}/search", body,
-                    Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+            var responseMessage = await _http.PostJsonAsync($"indexes/{Uid}/search", body, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
-            return await responseMessage.Content
-                .ReadFromJsonAsync<ISearchable<T>>(cancellationToken: cancellationToken)
+            var envelope = await responseMessage.Content
+                .ReadFromJsonAsync(_json.SearchEnvelopeInfo<T>(), cancellationToken)
                 .ConfigureAwait(false);
+
+
+            return envelope?.ToSearchable();
         }
 
         /// <summary>
@@ -519,12 +523,11 @@ namespace Meilisearch
                 body.FacetName = facetName;
             }
 
-            var responseMessage = await _http.PostAsJsonAsync($"indexes/{Uid}/facet-search", body,
-                    Constants.JsonSerializerOptionsRemoveNulls, cancellationToken: cancellationToken)
+            var responseMessage = await _http.PostJsonAsync($"indexes/{Uid}/facet-search", body, _json.RemoveNulls, cancellationToken)
                 .ConfigureAwait(false);
 
             return await responseMessage.Content
-                .ReadFromJsonAsync<FacetSearchResult>(cancellationToken: cancellationToken)
+                .ReadFromJsonAsync(_json.Info<FacetSearchResult>(), cancellationToken)
                 .ConfigureAwait(false);
         }
     }

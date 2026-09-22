@@ -23,8 +23,13 @@ namespace Meilisearch.Tests.ServerConfigs
                 }
             }
 
+            public class SourceGenConfigFixture : ConfigFixture
+            {
+                public override System.Text.Json.JsonSerializerOptions JsonOptions() => TestJson.SourceGen;
+            }
+
             [CollectionDefinition(IndexCollectionFixtureName)]
-            public class IndexCollection : ICollectionFixture<ConfigFixture>
+            public class IndexCollection : ICollectionFixture<ConfigFixture>, ICollectionFixture<SourceGenConfigFixture>
             {
             }
 
@@ -104,6 +109,30 @@ namespace Meilisearch.Tests.ServerConfigs
             public class TenantTokenTests : TenantTokenTests<ConfigFixture>
             {
                 public TenantTokenTests(ConfigFixture fixture) : base(fixture)
+                {
+                }
+            }
+
+            [Collection(IndexCollectionFixtureName)]
+            public class SourceGenDocumentTests : DocumentTests<SourceGenConfigFixture>
+            {
+                public SourceGenDocumentTests(SourceGenConfigFixture fixture) : base(fixture)
+                {
+                }
+            }
+
+            [Collection(IndexCollectionFixtureName)]
+            public class SourceGenSearchTests : SearchTests<SourceGenConfigFixture>
+            {
+                public SourceGenSearchTests(SourceGenConfigFixture fixture) : base(fixture)
+                {
+                }
+            }
+
+            [Collection(IndexCollectionFixtureName)]
+            public class SourceGenMultiIndexSearchTests : MultiIndexSearchTests<SourceGenConfigFixture>
+            {
+                public SourceGenMultiIndexSearchTests(SourceGenConfigFixture fixture) : base(fixture)
                 {
                 }
             }

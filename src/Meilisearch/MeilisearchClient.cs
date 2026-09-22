@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -35,7 +34,7 @@ namespace Meilisearch
         [RequiresUnreferencedCode(MeilisearchJson.ReflectionMessage)]
         [RequiresDynamicCode(MeilisearchJson.ReflectionMessage)]
         public MeilisearchClient(string url, string apiKey = default)
-            : this(CreateHttpClient(url), apiKey, MeilisearchJson.CreateReflectionDefault())
+            : this(CreateHttpClient(url), apiKey, MeilisearchJson.ReflectionDefault())
         {
         }
 
@@ -49,7 +48,7 @@ namespace Meilisearch
         [RequiresUnreferencedCode(MeilisearchJson.ReflectionMessage)]
         [RequiresDynamicCode(MeilisearchJson.ReflectionMessage)]
         public MeilisearchClient(HttpClient client, string apiKey = default)
-            : this(client, apiKey, MeilisearchJson.CreateReflectionDefault())
+            : this(client, apiKey, MeilisearchJson.ReflectionDefault())
         {
         }
 
@@ -100,9 +99,7 @@ namespace Meilisearch
         /// <returns>Returns the Meilisearch version with commit and build version.</returns>
         public async Task<MeiliSearchVersion> GetVersionAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _http.GetAsync("version", cancellationToken).ConfigureAwait(false);
-
-            return await response.Content.ReadFromJsonAsync(_json.Info<MeiliSearchVersion>(), cancellationToken)
+            return await _http.GetFromJsonAsync("version", _json.Info<MeiliSearchVersion>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -135,9 +132,11 @@ namespace Meilisearch
             }
 
             var responseMessage = await _http.PostJsonAsync("multi-search", query, _json.RemoveNulls, cancellationToken);
-            return await responseMessage.Content
-                .ReadFromJsonAsync<ISearchable<T>>(cancellationToken: cancellationToken)
+            var envelope = await responseMessage.Content
+                .ReadFromJsonAsync(_json.SearchEnvelopeInfo<T>(), cancellationToken)
                 .ConfigureAwait(false);
+
+            return envelope?.ToSearchable();
         }
 
         /// <summary>
@@ -156,9 +155,11 @@ namespace Meilisearch
             }
 
             var responseMessage = await _http.PostJsonAsync("multi-search", query, _json.RemoveNulls, cancellationToken);
-            return await responseMessage.Content
-                .ReadFromJsonAsync<MultiSearchResult>(cancellationToken: cancellationToken)
+            var envelope = await responseMessage.Content
+                .ReadFromJsonAsync(_json.MultiSearchEnvelopeInfo(), cancellationToken)
                 .ConfigureAwait(false);
+
+            return envelope?.ToMultiSearchResult();
         }
 
         /// <summary>
@@ -214,10 +215,7 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             var uri = query.ToQueryString(uri: "indexes");
-            var response = await _http.GetAsync(uri, cancellationToken).ConfigureAwait(false);
-
-            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonDocument.Parse(content);
+            return await _http.GetFromJsonAsync(uri, _json.Info<JsonDocument>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -230,14 +228,14 @@ namespace Meilisearch
             CancellationToken cancellationToken = default)
         {
             var uri = query.ToQueryString(uri: "indexes");
-            var response = await _http.GetAsync(uri, cancellationToken).ConfigureAwait(false);
-
-            var content = await response.Content
-                .ReadFromJsonAsync(_json.Info<ResourceResults<IEnumerable<Index>>>(), cancellationToken)
+            var content = await _http
+                .GetFromJsonAsync(uri, _json.Info<ResourceResults<IEnumerable<Index>>>(), cancellationToken)
                 .ConfigureAwait(false);
-            content.Results
-                .Select(p => p.WithHttpClient(_http, _json))
-                .ToList();
+            foreach (var index in content.Results)
+            {
+                index.WithHttpClient(_http, _json);
+            }
+
             return content;
         }
 
@@ -326,9 +324,7 @@ namespace Meilisearch
         /// <returns>Returns whether server is healthy or throw an error.</returns>
         public async Task<MeiliSearchHealth> HealthAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _http.GetAsync("health", cancellationToken).ConfigureAwait(false);
-
-            return await response.Content.ReadFromJsonAsync(_json.Info<MeiliSearchHealth>(), cancellationToken);
+            return await _http.GetFromJsonAsync("health", _json.Info<MeiliSearchHealth>(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -480,12 +476,7 @@ namespace Meilisearch
         /// <returns>Dynamic search rule with given identifier.</returns>
         public async Task<DynamicSearchRule> GetDynamicSearchRuleAsync(string uid, CancellationToken cancellationToken = default)
         {
-            var responseMessage =
-                await _http.GetAsync($"dynamic-search-rules/{uid}", cancellationToken)
-                    .ConfigureAwait(false);
-
-            return await responseMessage.Content
-                .ReadFromJsonAsync(_json.Info<DynamicSearchRule>(), cancellationToken)
+            return await _http.GetFromJsonAsync($"dynamic-search-rules/{uid}", _json.Info<DynamicSearchRule>(), cancellationToken)
                 .ConfigureAwait(false);
         }
 

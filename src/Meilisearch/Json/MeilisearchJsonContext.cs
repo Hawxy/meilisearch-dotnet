@@ -68,6 +68,7 @@ namespace Meilisearch.Json
     [JsonSerializable(typeof(FacetStat))]
     [JsonSerializable(typeof(MatchPosition))]
     [JsonSerializable(typeof(SimilarDocumentsQuery))]
+    // Response envelopes whose items are deserialized separately with caller metadata
     [JsonSerializable(typeof(IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>>))]
     [JsonSerializable(typeof(IReadOnlyDictionary<string, IReadOnlyCollection<MatchPosition>>))]
     [JsonSerializable(typeof(IReadOnlyDictionary<string, FacetStat>))]

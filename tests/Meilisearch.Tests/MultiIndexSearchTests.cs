@@ -60,7 +60,7 @@ namespace Meilisearch.Tests
             result.Results.Should().HaveCount(2);
             var res1 = result.Results[0];
             res1.IndexUid.Should().Be(_index1.Uid);
-            var res1Hits = res1.Hits.Select(x => x.Deserialize<Movie>(Constants.JsonSerializerOptionsWriteNulls));
+            var res1Hits = res1.Hits.Select(x => x.Deserialize<Movie>(TestJson.SourceGen));
             res1Hits.Should().HaveCount(2);
             res1Hits.All(x =>
             {
@@ -71,7 +71,7 @@ namespace Meilisearch.Tests
             var original2 = await _index2.GetDocumentsAsync<Movie>();
             var originalHits2 = original2.Results.ToList();
             var res2 = result.Results[1];
-            var res2Hits = res2.Hits.Select(x => x.Deserialize<Movie>(Constants.JsonSerializerOptionsWriteNulls));
+            var res2Hits = res2.Hits.Select(x => x.Deserialize<Movie>(TestJson.SourceGen));
             res2Hits.Should().HaveCount(2);
             res2.IndexUid.Should().Be(_index2.Uid);
             res1Hits.All(x =>

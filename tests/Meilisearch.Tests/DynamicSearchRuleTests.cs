@@ -241,8 +241,8 @@ namespace Meilisearch.Tests
 
         private static void AssertJsonEquivalent(object expected, object actual)
         {
-            var expectedNode = JsonSerializer.SerializeToNode(expected, Constants.JsonSerializerOptionsRemoveNulls);
-            var actualNode = JsonSerializer.SerializeToNode(actual, Constants.JsonSerializerOptionsRemoveNulls);
+            var expectedNode = JsonSerializer.SerializeToNode(expected, TestJson.ReflectionRemoveNulls);
+            var actualNode = JsonSerializer.SerializeToNode(actual, TestJson.ReflectionRemoveNulls);
 
             Assert.True(
                 JsonNode.DeepEquals(expectedNode, actualNode),

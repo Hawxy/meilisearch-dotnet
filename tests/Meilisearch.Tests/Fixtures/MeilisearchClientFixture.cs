@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -10,9 +11,19 @@ namespace Meilisearch.Tests.Fixtures
     {
         public MeilisearchClientFixture()
         {
-            DefaultClient = new MeilisearchClient(MeilisearchAddress(), ApiKey);
+            var options = JsonOptions();
             var httpClient = new HttpClient(new MeilisearchMessageHandler(new HttpClientHandler())) { BaseAddress = new Uri(MeilisearchAddress()) };
-            ClientWithCustomHttpClient = new MeilisearchClient(httpClient, ApiKey);
+
+            if (options == null)
+            {
+                DefaultClient = new MeilisearchClient(MeilisearchAddress(), ApiKey);
+                ClientWithCustomHttpClient = new MeilisearchClient(httpClient, ApiKey);
+            }
+            else
+            {
+                DefaultClient = new MeilisearchClient(MeilisearchAddress(), ApiKey, options);
+                ClientWithCustomHttpClient = new MeilisearchClient(httpClient, ApiKey, options);
+            }
         }
 
         private const string ApiKey = "masterKey";
@@ -21,6 +32,11 @@ namespace Meilisearch.Tests.Fixtures
         {
             throw new InvalidOperationException("Please override the MeilisearchAddress property in inhereted class.");
         }
+
+        /// <summary>
+        /// Serializer options for the clients. Null selects the reflection-based constructors.
+        /// </summary>
+        public virtual JsonSerializerOptions JsonOptions() => null;
 
         public MeilisearchClient DefaultClient { get; private set; }
         public MeilisearchClient ClientWithCustomHttpClient { get; private set; }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Meilisearch.Json;
 using Meilisearch.QueryParameters;
 
 using Xunit;
@@ -23,7 +24,7 @@ namespace Meilisearch.Tests.Fixtures
         public async Task<(PatchDynamicSearchRule, DynamicSearchRule)> SetUpDynamicSearchRuleAsync(string uid, string jsonPath)
         {
             var dsrJson = await File.ReadAllTextAsync(Datasets.GetDynamicSearchRuleJsonPath(jsonPath));
-            var patchRule = JsonSerializer.Deserialize<PatchDynamicSearchRule>(dsrJson, Constants.JsonSerializerOptionsRemoveNulls);
+            var patchRule = JsonSerializer.Deserialize(dsrJson, MeilisearchJson.Default.Info<PatchDynamicSearchRule>());
             await WaitForTaskSucceededAsync(await DefaultClient.CreateOrUpdateDynamicSearchRuleAsync(uid, patchRule));
             return (patchRule, await DefaultClient.GetDynamicSearchRuleAsync(uid));
         }
