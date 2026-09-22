@@ -81,7 +81,7 @@ dotnet format --check Meilisearch.sln
 dotnet format Meilisearch.sln
 ```
 
-Styles are the ones commonly used by the .NET Community. The code base uses `C# 12` and must keep compiling for `.NET Standard 2.0`, so avoid features that need newer runtime support (for example `init` accessors and records).
+Styles are the ones commonly used by the .NET Community. The code base uses the latest C# version of the SDK in CI and must keep compiling for `.NET Standard 2.0`, so avoid features that need newer runtime support (for example `init` accessors and records).
 
 You can check this two projects to have an idea how the code should looks like :
 * [Dapper](https://github.com/DapperLib/Dapper)
