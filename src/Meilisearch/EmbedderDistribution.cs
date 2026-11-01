@@ -16,6 +16,7 @@ namespace Meilisearch
         /// </summary>
         /// <param name="mean">Mean value between 0 and 1.</param>
         /// <param name="sigma">Sigma value between 0 and 1.</param>
+        [JsonConstructor]
         public EmbedderDistribution(double mean, double sigma)
         {
             Mean = mean;

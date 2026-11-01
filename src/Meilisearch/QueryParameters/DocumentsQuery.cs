@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch.QueryParameters
 {
     /// <summary>
@@ -30,6 +32,7 @@ namespace Meilisearch.QueryParameters
         /// An optional filter to apply
         /// </summary>
         [JsonPropertyName("filter")]
+        [JsonConverter(typeof(UntypedJsonConverter))]
         public object Filter { get; set; }
 
         /// <summary>

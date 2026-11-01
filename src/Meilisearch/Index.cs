@@ -1,10 +1,13 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Meilisearch.Extensions;
+using Meilisearch.Json;
+
 namespace Meilisearch
 {
 
@@ -24,6 +27,7 @@ namespace Meilisearch
         /// <param name="primaryKey">Documents primary key.</param>
         /// <param name="createdAt">The creation date of the index.</param>
         /// <param name="updatedAt">The latest update of the index.</param>
+        [JsonConstructor]
         public Index(string uid, string primaryKey = default, DateTimeOffset? createdAt = default, DateTimeOffset? updatedAt = default)
         {
             Uid = uid;
@@ -36,21 +40,25 @@ namespace Meilisearch
         /// <summary>
         /// Gets unique identifier of the index.
         /// </summary>
+        [JsonPropertyName("uid")]
         public string Uid { get; internal set; }
 
         /// <summary>
         /// Gets primary key of the documents.
         /// </summary>
+        [JsonPropertyName("primaryKey")]
         public string PrimaryKey { get; internal set; }
 
         /// <summary>
         /// Gets the latest update date of the index.
         /// </summary>
+        [JsonPropertyName("updatedAt")]
         public DateTimeOffset? UpdatedAt { get; internal set; }
 
         /// <summary>
         /// Gets the creation date of the index.
         /// </summary>
+        [JsonPropertyName("createdAt")]
         public DateTimeOffset? CreatedAt { get; internal set; }
 
         /// <summary>
@@ -99,7 +107,7 @@ namespace Meilisearch
         public async Task<TaskInfo> UpdateAsync(string primarykeytoChange, CancellationToken cancellationToken = default)
         {
             var responseMessage =
-                await _http.PatchAsJsonAsync($"indexes/{Uid}", new { primaryKey = primarykeytoChange }, cancellationToken: cancellationToken)
+                await _http.PatchAsJsonAsync($"indexes/{Uid}", new IndexPrimaryKeyPatch { PrimaryKey = primarykeytoChange }, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
 
             return await responseMessage.Content.ReadFromJsonAsync<TaskInfo>(cancellationToken: cancellationToken).ConfigureAwait(false);

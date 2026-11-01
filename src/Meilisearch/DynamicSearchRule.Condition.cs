@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using Meilisearch.Converters;
+
 namespace Meilisearch
 {
     /// <summary>
@@ -74,6 +76,7 @@ namespace Meilisearch
         /// Values may contain any JSON-compatible value.
         /// </summary>
         [JsonPropertyName("values")]
+        [JsonConverter(typeof(UntypedDictionaryJsonConverter))]
         public Dictionary<string, object> Values { get; set; }
     }
 }

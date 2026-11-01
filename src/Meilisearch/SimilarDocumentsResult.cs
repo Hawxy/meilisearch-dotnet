@@ -17,6 +17,7 @@ namespace Meilisearch
         /// <param name="offset"></param>
         /// <param name="limit"></param>
         /// <param name="estimatedTotalHits"></param>
+        [JsonConstructor]
         public SimilarDocumentsResult(
             IReadOnlyCollection<T> hits,
             string id,

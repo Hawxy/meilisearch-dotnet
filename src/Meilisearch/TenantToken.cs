@@ -37,7 +37,7 @@ namespace Meilisearch
 
             var identity = new ClaimsIdentity();
             identity.AddClaim(new Claim("apiKeyUid", apiKeyUid));
-            identity.AddClaim(new Claim("searchRules", JsonSerializer.Serialize(searchRules.ToClaim()), valueType));
+            identity.AddClaim(new Claim("searchRules", searchRules.ToJson(), valueType));
 
             var signingKey = Encoding.ASCII.GetBytes(apiKey);
 

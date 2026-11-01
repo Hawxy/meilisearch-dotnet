@@ -4,6 +4,7 @@ namespace Meilisearch
 {
     public class MatchPosition
     {
+        [JsonConstructor]
         public MatchPosition(int start, int length)
         {
             Start = start;

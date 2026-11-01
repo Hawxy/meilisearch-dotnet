@@ -193,7 +193,10 @@ namespace Meilisearch
     {
         public override KeyAction Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return (KeyAction)Enum.Parse(typeof(KeyAction), ConvertFromDotCase(reader.GetString()), false);
+            var name = ConvertFromDotCase(reader.GetString());
+            return Enum.TryParse<KeyAction>(name, false, out var action)
+                ? action
+                : throw new JsonException($"Invalid KeyAction value: '{name}'.");
         }
 
         public override void Write(Utf8JsonWriter writer, KeyAction value, JsonSerializerOptions options)

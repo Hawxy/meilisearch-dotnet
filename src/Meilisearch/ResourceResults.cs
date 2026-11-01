@@ -9,6 +9,7 @@ namespace Meilisearch
     /// <typeparam name="T">Type of the Meilisearch server object. Ex: keys, indexes, ...</typeparam>
     public class ResourceResults<T> : Result<T>
     {
+        [JsonConstructor]
         public ResourceResults(T results, int? limit, int offset, int total)
             : base(results, limit)
         {

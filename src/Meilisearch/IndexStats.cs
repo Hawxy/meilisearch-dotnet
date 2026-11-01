@@ -8,6 +8,7 @@ namespace Meilisearch
     /// </summary>
     public class IndexStats
     {
+        [JsonConstructor]
         public IndexStats(int numberOfDocuments, bool isIndexing, IReadOnlyDictionary<string, int> fieldDistribution, long rawDocumentDbSize, long avgDocumentSize, int numberOfEmbeddedDocuments, int numberOfEmbeddings)
         {
             NumberOfDocuments = numberOfDocuments;

@@ -22,6 +22,7 @@ namespace Meilisearch
         /// <param name="matchesPosition"></param>
         /// <param name="facetStats"></param>
         /// <param name="indexUid"></param>
+        [JsonConstructor]
         public SearchResult(IReadOnlyCollection<T> hits, int offset, int limit, int estimatedTotalHits,
             IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> facetDistribution,
             int processingTimeMs, string query,
